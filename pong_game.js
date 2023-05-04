@@ -4,13 +4,18 @@ const ballRadius = 10;
 let playerPaddle, ball;
 let gameStarted = false;
 let midiChords = [];
+let midiEnabled = false;
 
 function setup() {
   createCanvas(500, 500);
   playerPaddle = new Paddle(height / 2 - paddleHeight / 2);
   ball = new Ball();
   WebMidi.enable((err) => {
-    if (err) console.log("WebMidi could not be enabled.", err);
+    if (err) {
+      console.log("WebMidi could not be enabled.", err);
+    } else {
+      midiEnabled = true;
+    }
   });
 }
 
@@ -86,7 +91,7 @@ function checkGameOver() {
 }
 
 function playChord() {
-  if (WebMidi.enabled) {
+  if (midiEnabled) {
     let output = WebMidi.outputs[0];
     if (output) {
       let root = 60 + [0, 5, 7][Math.floor(Math.random() * 3)];
