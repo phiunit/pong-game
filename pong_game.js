@@ -162,19 +162,40 @@ function Paddle() {
 
 // Save MIDI file implementation
 function saveMIDIFile() {
-  let track = new MidiWriter.Track();
-  midiChords.forEach((chord) => {
+  let data = [];
+  let header = "MThd\x00\x00\x00\x06\x00\x01\x00\x01\x01\xE0";
+  let track = "MTrk";
+  let trackLength = 0;
+  let trackData = "";
+
+  midiChords.forEach((chord, index) => {
+    let deltaTime = index === 0 ? 0 : 480;
+    let noteOn = String.fromCharCode(0x90 | 0);
+    let noteOff = String.fromCharCode(0x80 | 0);
+
     chord.forEach((note) => {
-      track.addEvent(new MidiWriter.NoteEvent({pitch: [note], duration: '4'}));
+      trackData += String.fromCharCode(deltaTime) + noteOn + String.fromCharCode(note) + String.fromCharCode(0x40);
+      trackData += String.fromCharCode(480) + noteOff + String.fromCharCode(note) + String.fromCharCode(0x40);
     });
   });
 
-  let write = new MidiWriter.Writer(track);
-  let dataUri = write.dataUri();
+  trackLength = trackData.length;
+  track += String.fromCharCode((trackLength >> 24) & 0xFF);
+  track += String.fromCharCode((trackLength >> 16) & 0xFF);
+  track += String.fromCharCode((trackLength >> 8) & 0xFF);
+  track += String.fromCharCode(trackLength & 0xFF);
+  track += trackData;
+
+  data.push(header);
+  data.push(track);
+
+  let blob = new Blob(data, {type: "audio/midi"});
+  let url = URL.createObjectURL(blob);
 
   let link = document.createElement('a');
-  link.href = dataUri;
+  link.href = url;
   link.download = 'PongChords.mid';
   link.click();
 }
+
 
